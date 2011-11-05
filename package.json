@@ -1,0 +1,19 @@
+{
+  "author": "SHIN Suzuki <shinout310@gmail.com>",
+  "name": "master-worker",
+  "description": "multi process node execution with a single file",
+  "version": "0.0.1",
+  "repository": {
+    "url": ""
+  },
+  "engines": {
+    "node": "~0.5.9"
+  },
+  "dependencies": {
+    "tosource" : ">=0.1.1"
+  },
+  "devDependencies": {
+    "linestream" : ">=0.2.2",
+    "termcolor" : "*"
+  }
+}

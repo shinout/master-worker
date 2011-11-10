@@ -16,6 +16,7 @@ such as reading large files and heavy calculations.
 
 We set three options to constructor.
 master, worker and parallel.
+
     /**
      * example: counts the number of "O"s in str 
      */
@@ -67,6 +68,50 @@ master, worker and parallel.
       console.log(theNumberOfOs); // 2 + 1 + 2 = 5
     });
 
+#### reading each line of a file ####
+MasterWorker provides a specific API for processing lines of a file with multi-process
+
+use MasterWorker.processLine;
+
+    var mw = MasterWorker.processLines({
+
+      /**
+       * a filepath to read
+       **/
+      file: __dirname + "/data.tsv",
+
+      /**
+       * a function to process each line
+       * @param line: line
+       * @param result: a variable passed to master. The initial value is {}.
+       * @param data  : data passed from master.
+       **/
+      each: function(line, result, data) {
+        if (!result.total) result.total = 0;
+
+        var d = line.split(/ +/g);
+        if (d.length < 3) {
+          return;
+        }
+        if (Number(d[2]) > 0.5) {
+          result.total++;
+        }
+      },
+      parallel: 4
+
+    }, 
+
+    /**
+     * on End
+     **/
+    function(results) {
+      var total = results.reduce(function(total, v) {
+        return total + v.total;
+      }, 0);
+
+      console.log(total);
+    });
+
 
 #### notice ####
 worker function is executed in completely new context.
@@ -76,6 +121,7 @@ The function is actually stringified and parsed at worker environments.
 #### FAQ ####
 
 Q: Can we pass function to workers? I want to share codes.
+
 A: Sure. Here is a sample.
 
     var funcToPass = function() {
@@ -96,7 +142,9 @@ A: Sure. Here is a sample.
     });
 
 Q: Can I set callback function executed on the end of the function?
+
 A: You can set eventlisteners as mw.on("end", function(results) {}).
+
 Alternatively, you can pass the second arguments as a callback.
 
     var mw = new MasterWorker({
@@ -109,6 +157,7 @@ Alternatively, you can pass the second arguments as a callback.
 
 
 Q: I want to keep a masterwoker object non-running state.
+
 A: You can set "pause" option to do so.
 
     var mw = new MasterWorker({

@@ -15,7 +15,7 @@ var toSource = require("tosource");
  **/
 function MasterWorker(options, callback) {
   options || (options = {});
-  ["master", "worker", "parallel"].forEach(function(v) {
+  ["master", "worker", "parallel", "context"].forEach(function(v) {
     if (typeof options[v] != "undefined") this[v] = options[v];
   }, this);
 
@@ -39,6 +39,21 @@ Object.defineProperty(MasterWorker.prototype, "parallel", {
   set: function(n) {
     console.assert(typeof n == "number");
     this._parallel= parseInt(n);
+    return this;
+  }
+});
+
+
+/**
+ * property: context
+ **/
+Object.defineProperty(MasterWorker.prototype, "context", {
+  get: function() {
+    return this._context || {};
+  },
+  set: function(ctx) {
+    console.assert(typeof ctx == "object" && ctx != null);
+    this._context = ctx;
     return this;
   }
 });
@@ -91,7 +106,7 @@ MasterWorker.prototype.run = function(callback) {
 
     worker.on("message", function(result) {
       that.emit("data", result, i);
-      worker.kill();
+      // worker.kill();
       that.results[i] = result;
       // worker.kill();
       if (++total < that.parallel) {
@@ -100,7 +115,10 @@ MasterWorker.prototype.run = function(callback) {
       that.emit("end", that.results);
     });
 
-    worker.send("(" + this.worker.toString() + ")("+ toSource(data) +")");
+    worker.send({
+      source: "(" + this.worker.toString() + ")("+ toSource(data) +")",
+      context: toSource(this.context)
+    });
 
   }).call(this, i)}
 
@@ -143,6 +161,7 @@ MasterWorker.processLines = function(options, callback) {
   var mw = new MasterWorker({
 
     parallel: options.parallel,
+    context : options.context,
 
     pause: !!options.pause,
 
@@ -166,7 +185,7 @@ MasterWorker.processLines = function(options, callback) {
     },
     
     /**
-     * worker function. extends options.master
+     * worker function.
      **/
     worker: function(data) {
       var LS = require("linestream");
@@ -207,22 +226,24 @@ MasterWorker.processLines = function(options, callback) {
 
   // on End
   function(results) {
-    /**
-     * process split lines
-     **/
-    for (var i=-1, l=this.parallel; i<l; i++) {
-      var concatLine = ((i == -1) ? "" : results[i].e) + 
-                       ((i == l-1) ? "" : results[i+1].s);
+    with (this.context) { // TODO the use of "with" is sometimes confusing, avoid using this.
+      /**
+       * process split lines
+       **/
+      for (var i=-1, l=this.parallel; i<l; i++) {
+        var concatLine = ((i == -1) ? "" : results[i].e) + 
+                         ((i == l-1) ? "" : results[i+1].s);
 
-      var data   = (i > -1) ? this.master(i): this.master(i+1);
-      var result = (i > -1) ? results[i].r : results[i+1].r;
-      each(concatLine, result, data);
-    }
+        var data   = (i > -1) ? this.master(i): this.master(i+1);
+        var result = (i > -1) ? results[i].r : results[i+1].r;
+        each(concatLine, result, data);
+      }
 
-    if (typeof callback == "function") {
-      callback.call(this, results.map(function(result) {
-        return result.r;
-      }));
+      if (typeof callback == "function") {
+        callback.call(this, results.map(function(result) {
+          return result.r;
+        }));
+      }
     }
   });
 

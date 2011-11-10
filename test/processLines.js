@@ -7,6 +7,10 @@ MasterWorker.processLines({
 
   file: __dirname + "/data.tsv",
 
+  context: {
+    a: "b"
+  },
+
   /**
    * function to process each line
    * @param line: line

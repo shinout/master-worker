@@ -1,5 +1,6 @@
 process.on("message", function(data) {
-  require("vm").createScript(data).runInNewContext({
+  var src = require("vm").createScript(data.source);
+  var context = {
     clearInterval: clearInterval,
     Buffer       : Buffer,
     setTimeout   : setTimeout,
@@ -26,8 +27,20 @@ process.on("message", function(data) {
     send         : function(data) {
       process.stdout.on("close", function() {
         process.send(data);
+        process.exit();
       });
       process.stdout.end();
     }
-  });
+  };
+
+  try {
+    var customCtx = eval("(" + data.context + ")");
+    Object.keys(customCtx).forEach(function(k) {
+      context[k] = customCtx[k];
+    });
+  }
+  catch (e) {
+  }
+
+  src.runInNewContext(context);
 });

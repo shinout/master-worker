@@ -1,5 +1,3 @@
-require("termcolor").define();
-
 process.on("message", function(data) {
   require("vm").createScript(data).runInNewContext({
     clearInterval: clearInterval,
@@ -25,6 +23,11 @@ process.on("message", function(data) {
 
     require      : require,
 
-    send         : process.send
+    send         : function(data) {
+      process.stdout.on("close", function() {
+        process.send(data);
+      });
+      process.stdout.end();
+    }
   });
 });

@@ -18,6 +18,7 @@ var mw = new MasterWorker({
   },
 
   worker : function(data) {
+    require("termcolor").define();
     var fs = require("fs");
     var str = "";
     var stream = fs.createReadStream(data.filename, {

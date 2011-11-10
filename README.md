@@ -12,10 +12,15 @@ master-worker
 
 #### multiprocess execution ####
 forks workers and executes a function in parallel, mainly used for command-line programs,
+
 such as reading large files and heavy calculations.
 
+
 We set three options to constructor.
+
 master, worker and parallel.
+
+in worker function, you must call send() to send a result to master.
 
     /**
      * example: counts the number of "O"s in str 
@@ -36,7 +41,7 @@ master, worker and parallel.
       /**
        * worker  : function
        *   arguments : data <= data generated from master(i)
-       *   use "send(val)" in this function, (alternatively, process.send() is the same.)
+       *   use "send(val)" in this function.
        *   then "val" is passed to the master as a result of this worker.
        **/
       worker: function(data) {

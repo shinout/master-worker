@@ -1,8 +1,9 @@
 {
   "author": "SHIN Suzuki <shinout310@gmail.com>",
   "name": "master-worker",
+  "main": "./MasterWorker.js",
   "description": "multi process node execution with a single file",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "repository": {
     "url": ""
   },

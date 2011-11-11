@@ -1,6 +1,6 @@
 var MasterWorker = require("../MasterWorker");
 
-MasterWorker.processLines({
+var mw = MasterWorker.processLines({
   /**
    * a file to read
    **/
@@ -27,7 +27,9 @@ MasterWorker.processLines({
   },
   parallel: 4
 
-}, function(results) {
+});
+
+mw.on("end",function(results) {
   var total = results.reduce(function(total, v) {
     return total + v.total;
   }, 0);

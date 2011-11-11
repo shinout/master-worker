@@ -90,6 +90,14 @@ Object.defineProperty(MasterWorker.prototype, "worker", {
 
 
 /**
+ * called before emitting end event
+ **/
+MasterWorker.prototype.endhook = function() {
+};
+
+
+
+/**
  * execution
  * @param (function) callback: called when ended.
  **/
@@ -112,6 +120,9 @@ MasterWorker.prototype.run = function(callback) {
       if (++total < that.parallel) {
         return;
       }
+
+      that.endhook();
+
       that.emit("end", that.results);
     });
 
@@ -176,10 +187,12 @@ MasterWorker.processLines = function(options, callback) {
 
       var delta = Math.floor(size / this.parallel); // data size par process
 
-      data.file  = file;
+      data.file = file;
+      data.i = i;
+      data.last  = (i == this.parallel -1);
       data.each = each;
       data.start = i * delta;
-      data.end = (i == this.parallel - 1) ? size : ((i + 1) * delta - 1);
+      data.end = data.last ? size : ((i + 1) * delta - 1);
 
       return data;
     },
@@ -201,12 +214,12 @@ MasterWorker.processLines = function(options, callback) {
       });
 
       lines.on("data", function(line, isEnd) {
-        if (n++ == 0) {
+        if (n++ == 0 && data.i) {
           start = line;
           return;
         }
 
-        if (isEnd) {
+        if (isEnd && !data.last) {
           end = line;
           return;
         }
@@ -222,10 +235,15 @@ MasterWorker.processLines = function(options, callback) {
         });
       });
     }
-  }, 
+  }, callback);
 
-  // on End
-  function(results) {
+  /**
+   * called before the end event is emitted.
+   **/
+  mw.endhook = function() {
+    var results = this.results;
+
+    /** require requires **/
     try {
       Object.keys(this.requires).forEach(function(name) {
         var keypath = this.requires[name];
@@ -238,24 +256,25 @@ MasterWorker.processLines = function(options, callback) {
       }, this);
     }
     catch (e) {}
+
     /**
      * process split lines
      **/
-    for (var i=-1, l=this.parallel; i<l; i++) {
-      var concatLine = ((i == -1) ? "" : results[i].e) + 
-                       ((i == l-1) ? "" : results[i+1].s);
-
+    for (var i=0, l=this.parallel-1; i<l; i++) {
+      var concatLine = results[i].e + results[i+1].s;
       var data   = (i > -1) ? this.master(i): this.master(i+1);
       var result = (i > -1) ? results[i].r : results[i+1].r;
       each(concatLine, result, data);
     }
 
-    if (typeof callback == "function") {
-      callback.call(this, results.map(function(result) {
+    /**
+     * rewrite results
+     **/
+    this.results = results.map(function(result) {
         return result.r;
-      }));
-    }
-  });
+    });
+
+  };
 
   /**
    * assign file and each for using on("end")

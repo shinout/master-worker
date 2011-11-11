@@ -34,12 +34,17 @@ process.on("message", function(data) {
   };
 
   try {
-    Object.keys(data.requires).forEach(function(name) {
-      context[name] = require(data.requires[name]);
+    var requires = data.requires;
+    Object.keys(requires).forEach(function(name) {
+      var keypath = requires[name];
+      if (!Array.isArray(keypath)) keypath = [keypath];
+      var req = require(keypath.shift());
+      for (var i=0, l=keypath.length; i<l; i++) {
+        req = req[keypath[i]];
+      }
+      context[name] = req;
     });
-  }
-  catch (e) {
-  }
+  } catch (e) {}
 
   src.runInNewContext(context);
 });

@@ -3,7 +3,7 @@
   "name": "master-worker",
   "main": "./MasterWorker.js",
   "description": "multi process node execution with a single file",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "repository": {
     "url": ""
   },

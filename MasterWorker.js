@@ -228,7 +228,13 @@ MasterWorker.processLines = function(options, callback) {
   function(results) {
     try {
       Object.keys(this.requires).forEach(function(name) {
-        global[name] = require(this.requires[name]);
+        var keypath = this.requires[name];
+        if (!Array.isArray(keypath)) keypath = [keypath];
+        var req = require(keypath.shift());
+        for (var i=0, l=keypath.length; i<l; i++) {
+          req = req[keypath[i]];
+        }
+        global[name] = req;
       }, this);
     }
     catch (e) {}

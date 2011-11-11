@@ -15,7 +15,7 @@ var toSource = require("tosource");
  **/
 function MasterWorker(options, callback) {
   options || (options = {});
-  ["master", "worker", "parallel", "context"].forEach(function(v) {
+  ["master", "worker", "parallel", "requires"].forEach(function(v) {
     if (typeof options[v] != "undefined") this[v] = options[v];
   }, this);
 
@@ -45,15 +45,15 @@ Object.defineProperty(MasterWorker.prototype, "parallel", {
 
 
 /**
- * property: context
+ * property: requires 
  **/
-Object.defineProperty(MasterWorker.prototype, "context", {
+Object.defineProperty(MasterWorker.prototype, "requires", {
   get: function() {
-    return this._context || {};
+    return this._requires || {};
   },
-  set: function(ctx) {
-    console.assert(typeof ctx == "object" && ctx != null);
-    this._context = ctx;
+  set: function(obj) {
+    console.assert(typeof obj == "object" && obj != null);
+    this._requires = obj;
     return this;
   }
 });
@@ -117,7 +117,7 @@ MasterWorker.prototype.run = function(callback) {
 
     worker.send({
       source: "(" + this.worker.toString() + ")("+ toSource(data) +")",
-      context: toSource(this.context)
+      requires: this.requires
     });
 
   }).call(this, i)}
@@ -161,7 +161,7 @@ MasterWorker.processLines = function(options, callback) {
   var mw = new MasterWorker({
 
     parallel: options.parallel,
-    context : options.context,
+    requires: options.requires,
 
     pause: !!options.pause,
 
@@ -226,24 +226,28 @@ MasterWorker.processLines = function(options, callback) {
 
   // on End
   function(results) {
-    with (this.context) { // TODO the use of "with" is sometimes confusing, avoid using this.
-      /**
-       * process split lines
-       **/
-      for (var i=-1, l=this.parallel; i<l; i++) {
-        var concatLine = ((i == -1) ? "" : results[i].e) + 
-                         ((i == l-1) ? "" : results[i+1].s);
+    try {
+      Object.keys(this.requires).forEach(function(name) {
+        global[name] = require(this.requires[name]);
+      }, this);
+    }
+    catch (e) {}
+    /**
+     * process split lines
+     **/
+    for (var i=-1, l=this.parallel; i<l; i++) {
+      var concatLine = ((i == -1) ? "" : results[i].e) + 
+                       ((i == l-1) ? "" : results[i+1].s);
 
-        var data   = (i > -1) ? this.master(i): this.master(i+1);
-        var result = (i > -1) ? results[i].r : results[i+1].r;
-        each(concatLine, result, data);
-      }
+      var data   = (i > -1) ? this.master(i): this.master(i+1);
+      var result = (i > -1) ? results[i].r : results[i+1].r;
+      each(concatLine, result, data);
+    }
 
-      if (typeof callback == "function") {
-        callback.call(this, results.map(function(result) {
-          return result.r;
-        }));
-      }
+    if (typeof callback == "function") {
+      callback.call(this, results.map(function(result) {
+        return result.r;
+      }));
     }
   });
 

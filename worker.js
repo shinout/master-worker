@@ -34,9 +34,8 @@ process.on("message", function(data) {
   };
 
   try {
-    var customCtx = eval("(" + data.context + ")");
-    Object.keys(customCtx).forEach(function(k) {
-      context[k] = customCtx[k];
+    Object.keys(data.requires).forEach(function(name) {
+      context[name] = require(data.requires[name]);
     });
   }
   catch (e) {

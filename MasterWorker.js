@@ -187,12 +187,13 @@ MasterWorker.processLines = function(options, callback) {
 
       var delta = Math.floor(size / this.parallel); // data size par process
 
-      data.file = file;
-      data.i = i;
-      data.last  = (i == this.parallel -1);
-      data.each = each;
-      data.start = i * delta;
-      data.end = data.last ? size : ((i + 1) * delta - 1);
+      data._file  = file;
+      data._i     = i;
+      data._first = (i == 0);
+      data._last  = (i == this.parallel -1);
+      data._each  = each;
+      data._start = i * delta;
+      data._end   = data._last ? size : ((i + 1) * delta - 1);
 
       return data;
     },
@@ -207,24 +208,24 @@ MasterWorker.processLines = function(options, callback) {
       var start, end;
       var n = 0;
 
-      var lines = new LS(data.file, {
-        start : data.start,
-        end   : data.end,
+      var lines = new LS(data._file, {
+        start : data._start,
+        end   : data._end,
         trim  : true
       });
 
       lines.on("data", function(line, isEnd) {
-        if (n++ == 0 && data.i) {
+        if (n++ == 0 && !data._first) {
           start = line;
           return;
         }
 
-        if (isEnd && !data.last) {
+        if (isEnd && !data._last) {
           end = line;
           return;
         }
 
-        data.each(line, result, data);
+        data._each(line, result, data);
       });
 
       lines.on("end", function() {

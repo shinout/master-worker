@@ -8,7 +8,7 @@
     "url": ""
   },
   "engines": {
-    "node": ">=0.5.9"
+    "node": ">=0.6.0"
   },
   "dependencies": {
     "tosource" : ">=0.1.1",

@@ -25,11 +25,19 @@ process.on("message", function(data) {
     require      : require,
 
     send         : function(data) {
-      process.stdout.on("close", function() {
-        process.send(data);
+      /**
+       * Node >=v0.6.1, process.std.end() cannot be called.
+        process.stdout.on("close", function() {
+          process.send(data);
+          process.exit();
+        });
+        process.stdout.end();
+      **/
+      process.send(data);
+
+      setTimeout(function() {
         process.exit();
-      });
-      process.stdout.end();
+      }, 100);
     }
   };
 

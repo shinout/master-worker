@@ -3,7 +3,7 @@
   "name": "master-worker",
   "main": "./MasterWorker.js",
   "description": "multi process node execution with a single file",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "repository": {
     "url": ""
   },
@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "tosource" : ">=0.1.1",
-    "linestream" : ">=0.2.4"
+    "linestream" : ">=0.2.7"
   },
   "devDependencies": {
     "termcolor" : "*"
